@@ -1,0 +1,21 @@
+{
+  "name": "changelist",
+  "version": "0.0.1",
+  "authors": [
+    "Dan Petty <mixmatch@gmail.com>"
+  ],
+  "description": "Track build/change status",
+  "main": "index.html",
+  "license": "Unlicense",
+  "homepage": "https://github.com/mixmatch/changelist",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-bootstrap": "~0.13.1"
+  }
+}
