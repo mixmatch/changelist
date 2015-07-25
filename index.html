@@ -1,59 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <title>Change List</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+    <title>Change List</title>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
     <script src="changelist.js"></script>
-    <link href="bower_components/bootstrap-css/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bower_components/bootstrap-css/css/bootstrap.css" rel="stylesheet">
+    <link href="css/cascade/build-full.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style media="screen">
       .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
-      .Pending {
+      /* Material Design Icons */
+      .material-icons.md-18 { font-size: 18px; }
+      .material-icons.md-24 { font-size: 24px; }
+      .material-icons.md-36 { font-size: 36px; }
+      .material-icons.md-48 { font-size: 48px; }
+      .pending {
         color: darkgray;
       }
-      .Running {
+      .running {
         color: cornflowerblue;
       }
-      .Complete {
+      .complete {
         color: forestgreen;
       }
-      .Rejected {
+      .rejected {
         color: crimson;
       }
-      .Accepted {
+      .accepted {
         color: forestgreen;
       }
-      .Passed {
+      .passed {
         color: forestgreen;
       }
-      .Failed {
+      .failed {
         color: crimson;
+      }
+      .statusbox {
+        padding-left:25px;
+      }
+      .pendingbox {
+        width: 18px;
+        height: 18px;
+        background-color: darkgray;
+      }
+      .runningbox {
+        width: 18px;
+        height: 18px;
+        background-color: cornflowerblue;
+      }
+      .capitalize {
+        text-transform: capitalize;
+      }
+      .result {
+        margin: 0px 5px;
+        padding: 5px;
+        border: medium solid darkgray;
+      }
+      .resultrunning {
+        margin: 0px 5px;
+        padding: 5px;
+        border: medium solid cornflowerblue;
+      }
+      .resultpassed {
+        margin: 0px 5px;
+        padding: 5px;
+        border: medium solid forestgreen;
+      }
+      .resultfailed {
+        margin: 0px 5px;
+        padding: 5px;
+        border: medium solid crimson;
+      }
+      #listHeader {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+      #listHeader .col {
+        padding: 0px 10px;
       }
     </style>
   </head>
   <body>
-    <div id="ng-app" class="container" ng-app="app" ng-controller="ChangelistAccordion">
-      <div accordion close-others="true">
+    <div id="listHeader">
+      <h3 class="col width-2of12">Changelist / Build</h3>
+      <h3 class="col width-1of12">Owner</h3>
+      <h3 class="col width-3of12">Time Started</h3>
+      <h3 class="col width-1of12">State</h3>
+      <h3 class="col width-1of12">Metrics</h3>
+      <h3 class="col width-1of12">Build</h3>
+      <h3 class="col width-1of12">Unit Test</h3>
+      <h3 class="col width-2of12">Functional Test</h3>
+    </div>
+    <div id="ng-app" ng-app="app" ng-controller="listAccordion">
+      <div accordion class="container-fluid" close-others="true">
         <div accordion-group ng-repeat="item in changeList">
-          <div accordion-heading>
-            {{item.type}} {{item.build}} {{item.owner}} {{item.startTimestamp | date:'MM/dd/yyyy h:mma'}} {{item.state}} {{item.metrics}} {{item.build}} {{item.unitTest}} {{item.functionalTest}}
-          </div>
-          {{item.metrics}} {{item.build}} {{item.unitTest}} {{item.functionalTest}}
-        </div>
-        <div accordion-group>
-            <div accordion-heading>
-              <i class="material-icons dp48">&#xe8b6;</i> <!-- search -->
-              <i class="material-icons dp48">&#xe86c;</i> <!-- check_circle -->
-              <i class="material-icons dp48">&#xe000;</i> <!-- error -->
-              <i class="material-icons dp48">&#xe32a;</i> <!-- security -->
-              <i class="material-icons dp48">&#xe30a;</i> <!-- computer -->
+          <div accordion-heading class="col">
+            <div class="col width-2of12 {{item.state}}">
+              <div class="col width-2of12" ng-bind-html="getIcon(item.type)"></div> {{item.id}}
             </div>
-            This is just some content to illustrate fancy headings.
+            <div class="col width-1of12 {{item.state}}">
+              {{item.owner}}
+            </div>
+            <div class="col width-3of12 {{item.state}}">
+              {{item.startTimestamp | date:'MM/dd/yyyy h:mma'}}
+            </div>
+            <div class="capitalize col width-1of12 {{item.state}}">
+              {{item.state}}
+            </div>
+            <div class="col width-1of12 statusbox {{item.metrics.status}}" ng-bind-html="getIcon(item.metrics.status)"></div>
+            <div class="col width-1of12 statusbox {{item.build.status}}" ng-bind-html="getIcon(item.build.status)"></div>
+            <div class="col width-1of12 statusbox {{item.unitTest.status}}" ng-bind-html="getIcon(item.unitTest.status)"></div>
+            <div class="col width-2of12 statusbox {{item.functionalTest.status}}" ng-bind-html="getIcon(item.functionalTest.status)"></div>
+          </div>
+            <div class="col width-1of5">
+              <div class="result{{item.metrics.status}}">
+                <h3>Metrics</h3>
+                Test: {{item.metrics.test}}<br>
+                Maintainability: {{item.metrics.maintainability}}<br>
+                Security: {{item.metrics.security}}<br>
+                Worksmanship: {{item.metrics.worksmanship}}
+              </div>
+            </div>
+            <div class="col width-1of5">
+              <div class="result{{item.build.status}}">
+                <h3>Build</h3>
+                Debug: {{item.build.debug ? "Passed" : "Failed"}}<br>
+                Release: {{item.build.release ? "Passed" : "Failed"}}<br>
+                {{item.build.buildTimestamp | date:'MM/dd/yyyy h:mma'}}
+              </div>
+            </div>
+            <div class="col width-1of5">
+              <div class="result{{item.unitTest.status}}">
+                <h3>Unit Test</h3>
+                Passed: {{item.unitTest.numberpassed}}<br>
+                Failed: {{item.unitTest.numberfailed}}<br>
+                {{item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed) | number: 0}}% Tests Passed<br>
+                Code Covered: {{item.unitTest.codeCovered}}%<br>
+              </div>
+            </div>
+            <div class="col width-1of5">
+              <div class="result{{item.functionalTest.status}}">
+                <h3>Functional Test</h3>
+                Passed: {{item.functionalTest.numberpassed}}<br>
+                Failed: {{item.functionalTest.numberfailed}}<br>
+                {{item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed) | number: 0}}% Tests Passed<br>
+                Code Covered: {{item.functionalTest.codeCovered}}%<br>
+              </div>
+            </div>
+            <div class="col width-1of5">
+              <div class="">
+                <h3>Result</h3>
+              </div>
+            </div>
         </div>
       </div>
     </div>
