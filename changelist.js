@@ -1,7 +1,7 @@
 //Item format
 // {
 //   type: "", // string - firewall, build
-//   build: "", // string - build ID
+//   id: "", // string - build ID
 //   owner: "", // string - User
 //   startTimestamp: 0, // number - Unix Epoch Date test started
 //   state: "", // string - pending, running, complete, rejected, accepted
@@ -34,34 +34,30 @@
 
 //
 angular.module('app', ['ui.bootstrap'])
-.filter('html',function($sce){
-    return function(input){
-        return $sce.trustAsHtml(input);
-    }
-})
-.controller('listAccordion', [ '$scope', '$sce', function($scope, $sce){
-  
+.controller('listAccordion', [ '$scope', '$modal', '$sce', function($scope, $modal, $sce){
+  // Stub for backend JSON server
+  // Returned value gets populated to Angular UI
   var getData = function() {
     var data = [
       {
-        type: "build", // firewall, build
+        type: "build",
         id: "Tenrox-R1_1235",
         owner: "",
         startTimestamp: null,
-        state: "pending", //pending, running, complete, rejected, accepted
+        state: "pending",
         metrics: null,
         build: null,
         unitTest: null,
         functionalTest: null
       },
       {
-        type: "firewall", // firewall, build
+        type: "firewall",
         id: "432462",
         owner: "jtuck",
         startTimestamp: 1397844720000,
-        state: "running", //pending, running, complete, rejected, accepted
+        state: "running",
         metrics: {
-          status: "running", // string - running, passed, failed
+          status: "running",
           test: 64,
           maintainability: 53,
           security: 64,
@@ -72,113 +68,113 @@ angular.module('app', ['ui.bootstrap'])
         functionalTest: null
       },
       {
-        type: "firewall", // firewall, build
+        type: "firewall",
         id: "432461",
         owner: "samy",
         startTimestamp: 1397839980000,
-        state: "rejected", //pending, running, complete, rejected, accepted
+        state: "rejected",
         metrics: {
-          status: "failed", // string - running, passed, failed
+          status: "failed",
           test: 64,
           maintainability: 53,
           security: 64,
           worksmanship:72
         },
         build: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           debug: true,
           release: true,
           buildTimestamp: 1397854200000,
         },
         unitTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 142,
           numberfailed: 10,
           codeCovered: 76
         },
         functionalTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 4321,
           numberfailed: 2145,
           codeCovered: 23
         }
       },
       {
-        type: "build", // firewall, build
+        type: "build",
         id: "Tenrox-R1_1234",
         owner: "",
         startTimestamp: 1397749320000,
-        state: "complete", //pending, running, complete, rejected, accepted
+        state: "complete",
         metrics: {
-          status: "passed", // string - running, passed, failed
-          test:64,
-          maintainability: 53,
-          security: 64,
-          worksmanship:72
+          status: "passed",
+          test:71,
+          maintainability: 82,
+          security: 87,
+          worksmanship:93
         },
         build: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           debug: true,
           release: true,
           buildTimestamp: 1397764200000,
         },
         unitTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 142,
           numberfailed: 10,
           codeCovered: 76
         },
         functionalTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 4321,
           numberfailed: 2145,
           codeCovered: 23
         }
       },
       {
-        type: "firewall", // firewall, build
+        type: "firewall",
         id: "432460",
         owner: "samy",
         startTimestamp: 1397742660000,
-        state: "rejected", //pending, running, complete, rejected, accepted
+        state: "rejected",
         metrics: {
-          status: "failed", // string - running, passed, failed
-          test: 0,
-          maintainability: 0,
-          security: 0,
-          worksmanship:0
+          status: "failed",
+          test: 43,
+          maintainability: 30,
+          security: 48,
+          worksmanship:60
         },
         build: null,
         unitTest: null,
         functionalTest: null
       },
       {
-        type: "firewall", // firewall, build
+        type: "firewall",
         id: "432459",
         owner: "samy",
         startTimestamp: 1397652180000,
-        state: "accepted", //pending, running, complete, rejected, accepted
+        state: "accepted",
         metrics: {
-          status: "passed", // string - running, passed, failed
-          test: 64,
-          maintainability: 53,
-          security: 64,
-          worksmanship:72
+          status: "passed",
+          test: 77,
+          maintainability: 93,
+          security: 86,
+          worksmanship:96
         },
         build: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           debug: true,
           release: true,
           buildTimestamp: 1397753160000,
         },
         unitTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 142,
           numberfailed: 10,
           codeCovered: 76
         },
         functionalTest: {
-          status: "passed", // string - running, passed, failed
+          status: "passed",
           numberpassed: 4321,
           numberfailed: 2145,
           codeCovered: 23
@@ -187,15 +183,52 @@ angular.module('app', ['ui.bootstrap'])
     ];
     return data
   };
-  //
-  // $scope.icons ={
-  //   firewall: $sce.trustAsHtml('<i class="material-icons dp48">&#xe32a;</i>'),
-  //   build: $sce.trustAsHtml('<i class="material-icons dp48">&#xe30a;</i>'),
-  //   search:
-  // };
-  //
+  // Shows Angular UI Modal Window
+  // Not working in IE8
+  var showModal = function (template, item) {
+    var modalInstance = $modal.open({
+      animation: true,
+      templateUrl: template,
+      controller: 'ModalInstanceCtrl',
+      size: 'lg',
+      resolve: {
+        item: function () {
+          return item;
+        }
+      }
+    });
+  }
+  // Metrics Details Modal
+  $scope.showMetricsDetails = function (metrics) {
+    console.log(metrics);
+    if (metrics !== null && metrics.status !== 'running'){
+      showModal('modalMetricsDetails.html', metrics);
+    }
+  }
+  // Build Details Modal
+  $scope.showBuildDetails = function (build) {
+    console.log(build);
+    if (build !== null && build.status !== 'running'){
+      showModal('modalBuildDetails.html', build);
+    }
+  }
+  // Unit Test Details Modal
+  $scope.showUnitTestDetails = function (unitTest) {
+    console.log(unitTest);
+    if (unitTest !== null && unitTest.status !== 'running'){
+      showModal('modalUnitTestDetails.html', unitTest);
+    }
+  }
+  // Functional Test Details Modal
+  $scope.showFunctionalTestDetails = function (functionalTest) {
+    console.log(functionalTest);
+    if (functionalTest !== null && functionalTest.status !== 'running'){
+      showModal('modalFunctionalTestDetails.html', functionalTest);
+    }
+  }
+  // Generates Icons using Google Material Icon font
+  // Working IE8 native but not using F12 compatibility mode
   $scope.getIcon = function (icon) {
-    console.log(icon);
     var icons = {
         firewall: 'e32a',
         build: 'e30a',
@@ -218,6 +251,11 @@ angular.module('app', ['ui.bootstrap'])
       return $sce.trustAsHtml('<div class="col width-1of12 material-icons md-18">&#x' + icons[icon] + ';</div>');
     }
   }
-  //
+  // Fetch Data to populate page
   $scope.changeList = getData();
 }]);
+// Modal controller to pass item variable to modal scope
+angular.module('app')
+.controller('ModalInstanceCtrl', function ($scope, $modalInstance, item) {
+  $scope.item = item;
+});

@@ -5,76 +5,107 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Change List</title>
+    <script src="https://rawgithub.com/javascript/augment/master/augment.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
     <script src="changelist.js"></script>
     <link href="bower_components/bootstrap-css/css/bootstrap.css" rel="stylesheet">
     <link href="css/cascade/build-full.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style media="screen">
+    <style>
+      select {
+        width: 100%;
+        margin: 5px 0px;
+      }
+      h4 {
+        margin: 5px;
+      }
       .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+      .capitalize {
+        text-transform: capitalize;
+      }
+      .centered {
+          text-align: center;
+          margin: 5px;
+      }
       /* Material Design Icons */
       .material-icons.md-18 { font-size: 18px; }
       .material-icons.md-24 { font-size: 24px; }
       .material-icons.md-36 { font-size: 36px; }
       .material-icons.md-48 { font-size: 48px; }
+      
+      .btn-primary {
+        width: 100%;
+      }
+      .progress {
+        margin-bottom: 5px;
+      }
+      /* Status-based text/icon styles */
       .pending {
-        color: darkgray;
+        color: dimgray;
       }
       .running {
-        color: cornflowerblue;
+        color: darkblue;
       }
       .complete {
-        color: forestgreen;
+        color: darkgreen;
       }
       .rejected {
-        color: crimson;
+        color: firebrick;
       }
       .accepted {
-        color: forestgreen;
+        color: darkgreen;
       }
       .passed {
-        color: forestgreen;
+        color: darkgreen;
       }
       .failed {
-        color: crimson;
+        color: firebrick;
       }
+      /* Status Icons */
       .statusbox {
+        margin-top: 1px;
         padding-left:25px;
       }
       .pendingbox {
         width: 18px;
         height: 18px;
-        background-color: darkgray;
+          margin-top: 1px;
+        background-color: dimgray;
       }
       .runningbox {
         width: 18px;
         height: 18px;
-        background-color: cornflowerblue;
+          margin-top: 1px;
+        background-color: darkblue;
       }
-      .capitalize {
-        text-transform: capitalize;
-      }
+      /* Result info boxes */
       .result {
-        margin: 0px 5px;
+        margin: 5px;
         padding: 5px;
-        border: medium solid darkgray;
+        min-height: 220px;
+        border-radius: 5px;
+        color: black;
+        background-color: lightgray;
       }
-      .resultrunning {
-        margin: 0px 5px;
-        padding: 5px;
-        border: medium solid cornflowerblue;
+      .result.running {
+        background-color: lightsteelblue;
       }
-      .resultpassed {
-        margin: 0px 5px;
-        padding: 5px;
-        border: medium solid forestgreen;
+      .result.passed {
+        background-color: #c9dbc6;
+        cursor: pointer;
       }
-      .resultfailed {
-        margin: 0px 5px;
-        padding: 5px;
-        border: medium solid crimson;
+      .result.complete, .result.accepted {
+        background-color: #c9dbc6;
       }
+      .result.failed {
+        background-color: #f8d9d9;
+        cursor: pointer;
+      }
+      .result.rejected {
+        background-color: #f8d9d9;
+      }
+      /* Header styling */
       #listHeader {
         padding-left: 10px;
         padding-right: 10px;
@@ -96,11 +127,91 @@
       <h3 class="col width-2of12">Functional Test</h3>
     </div>
     <div id="ng-app" ng-app="app" ng-controller="listAccordion">
+      <!-- Metrics Details Modal -->
+      <script type="text/ng-template" id="modalMetricsDetails.html">
+        <div class="modal-header">
+          <h3 class="modal-title">Metrics Detailed Results</h3>
+        </div>
+        <div class="modal-body">
+          <b>Test ({{item.test}}):</b><br>
+          Test Details<br> <!-- Stub -->
+          <br>
+          <b>Maintainability ({{item.maintainability}}):</b><br>
+          Maintainability Details<br> <!-- Stub -->
+          <br>
+          <b>Security ({{item.security}}):</b><br>
+          Security Details<br> <!-- Stub -->
+          <br>
+          <b>Worksmanship ({{item.worksmanship}}):</b><br>
+          Worksmanship Details<br> <!-- Stub -->
+        </div>
+        <div class="modal-footer">
+            <div class="btn btn-primary" ng-click="$close()">OK</div>
+        </div>
+      </script>
+      <!-- Build Details Modal -->
+      <script type="text/ng-template" id="modalBuildDetails.html">
+        <div class="modal-header">
+          <h3 class="modal-title">Build Detailed Results</h3>
+        </div>
+        <div class="modal-body">
+          <b>Debug ({{item.debug ? "Passed" : "Failed"}}):</b><br>
+          Debug Details<br> <!-- Stub -->
+          <br>
+          <b>Release ({{item.release ? "Passed" : "Failed"}}):</b><br>
+          Release Details<br> <!-- Stub -->
+          <br>
+          <b>Build Completed:</b> {{item.buildTimestamp | date:'MM/dd/yyyy h:mma'}}<br>
+        </div>
+        <div class="modal-footer">
+            <div class="btn btn-primary" ng-click="$close()">OK</div>
+        </div>
+      </script>
+      <!-- Unit Test Details Modal -->
+      <script type="text/ng-template" id="modalUnitTestDetails.html">
+        <div class="modal-header">
+          <h3 class="modal-title">Unit Test Detailed Results</h3>
+        </div>
+        <div class="modal-body">
+          <b>Passed ({{item.numberpassed}}):</b><br>
+          Passed Details<br> <!-- Stub -->
+          <br>
+          <b>Failed ({{item.numberfailed}}):</b><br>
+          Failed Details<br> <!-- Stub -->
+          <br>
+          <b>Tests Passed:</b> {{item.numberpassed * 100 / (item.numberpassed + item.numberfailed) | number: 0}}%<br>
+          <b>Code Covered:</b> {{item.codeCovered}}%<br>
+        </div>
+        <div class="modal-footer">
+            <div class="btn btn-primary" ng-click="$close()">OK</div>
+        </div>
+      </script>
+      <!-- Functional Test Details Modal -->
+      <script type="text/ng-template" id="modalFunctionalTestDetails.html">
+        <div class="modal-header">
+          <h3 class="modal-title">Functional Test Detailed Results</h3>
+        </div>
+        <div class="modal-body">
+          <b>Passed ({{item.numberpassed}}):</b><br>
+          Passed Details<br> <!-- Stub -->
+          <br>
+          <b>Failed ({{item.numberfailed}}):</b><br>
+          Failed Details<br> <!-- Stub -->
+          <br>
+          <b>Tests Passed:</b> {{item.numberpassed * 100 / (item.numberpassed + item.numberfailed) | number: 0}}%<br>
+          <b>Code Covered:</b> {{item.codeCovered}}%<br>
+        </div>
+        <div class="modal-footer">
+            <div class="btn btn-primary" ng-click="$close()">OK</div>
+        </div>
+      </script>
+      <!-- Change List Accordion -->
       <div accordion class="container-fluid" close-others="true">
         <div accordion-group ng-repeat="item in changeList">
           <div accordion-heading class="col">
             <div class="col width-2of12 {{item.state}}">
-              <div class="col width-2of12" ng-bind-html="getIcon(item.type)"></div> {{item.id}}
+              <div class="col width-2of12" 
+                ng-bind-html="getIcon(item.type)"></div> {{item.id}}
             </div>
             <div class="col width-1of12 {{item.state}}">
               {{item.owner}}
@@ -111,49 +222,227 @@
             <div class="capitalize col width-1of12 {{item.state}}">
               {{item.state}}
             </div>
-            <div class="col width-1of12 statusbox {{item.metrics.status}}" ng-bind-html="getIcon(item.metrics.status)"></div>
-            <div class="col width-1of12 statusbox {{item.build.status}}" ng-bind-html="getIcon(item.build.status)"></div>
-            <div class="col width-1of12 statusbox {{item.unitTest.status}}" ng-bind-html="getIcon(item.unitTest.status)"></div>
-            <div class="col width-2of12 statusbox {{item.functionalTest.status}}" ng-bind-html="getIcon(item.functionalTest.status)"></div>
+            <div class="col width-1of12 statusbox {{item.metrics.status}}" 
+              ng-bind-html="getIcon(item.metrics.status)"></div>
+            <div class="col width-1of12 statusbox {{item.build.status}}" 
+              ng-bind-html="getIcon(item.build.status)"></div>
+            <div class="col width-1of12 statusbox {{item.unitTest.status}}" 
+              ng-bind-html="getIcon(item.unitTest.status)"></div>
+            <div class="col width-2of12 statusbox {{item.functionalTest.status}}" 
+              ng-bind-html="getIcon(item.functionalTest.status)"></div>
           </div>
             <div class="col width-1of5">
-              <div class="result{{item.metrics.status}}">
+              <div class="result {{item.metrics.status}}" 
+                ng-switch on="item.metrics.status" 
+                ng-click="showMetricsDetails(item.metrics)">
                 <h3>Metrics</h3>
-                Test: {{item.metrics.test}}<br>
-                Maintainability: {{item.metrics.maintainability}}<br>
-                Security: {{item.metrics.security}}<br>
-                Worksmanship: {{item.metrics.worksmanship}}
+                <div ng-switch-when="undefined">
+                  No data available.
+                </div>
+                <div ng-switch-when="running">
+                  Currently running.
+                </div>
+                <div ng-switch-default>
+                  <div class="col">
+                    <b>Test:</b>
+                  </div>
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.metrics.test" 
+                      type="success">{{item.metrics.test}}</div>
+                    <div bar value="100 - item.metrics.test" 
+                      type="danger">{{100 - item.metrics.test}}</div>
+                  </div> 
+                  <div class="col">
+                    <b>Maintainability:</b>
+                  </div>
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.metrics.maintainability" 
+                      type="success">{{item.metrics.maintainability}}</div>
+                    <div bar value="100 - item.metrics.maintainability" 
+                      type="danger">{{100 - item.metrics.maintainability}}</div>
+                  </div> 
+                  <div class="col">
+                    <b>Security:</b>
+                  </div>
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.metrics.security" 
+                      type="success">{{item.metrics.security}}</div>
+                    <div bar value="100 - item.metrics.security" 
+                      type="danger">{{100 - item.metrics.security}}</div>
+                  </div> 
+                  <div class="col">
+                    <b>Worksmanship:</b>
+                  </div>
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.metrics.worksmanship" 
+                      type="success">{{item.metrics.worksmanship}}</div>
+                    <div bar value="100 - item.metrics.worksmanship" 
+                      type="danger">{{100 - item.metrics.worksmanship}}</div>
+                  </div> 
+                </div>
               </div>
             </div>
             <div class="col width-1of5">
-              <div class="result{{item.build.status}}">
+              <div class="result {{item.build.status}}" 
+                ng-switch on="item.build.status" 
+                ng-click="showBuildDetails(item.build)">
                 <h3>Build</h3>
-                Debug: {{item.build.debug ? "Passed" : "Failed"}}<br>
-                Release: {{item.build.release ? "Passed" : "Failed"}}<br>
-                {{item.build.buildTimestamp | date:'MM/dd/yyyy h:mma'}}
+                <div ng-switch-when="undefined">
+                  No data available.
+                </div>
+                <div ng-switch-when="running">
+                  Currently running.
+                </div>
+                <div ng-switch-default>
+                  <div class="col">
+                    <b>Debug:</b> 
+                  </div>
+                  <div class="col width-2of12 {{item.build.debug ? 'passed' : 'failed'}}" 
+                    ng-bind-html="getIcon('build')"></div>
+                  <div class="col width-10of12 {{item.build.debug ? 'passed' : 'failed'}}">
+                    <h4>{{item.build.debug ? "Passed" : "Failed"}}</h4>
+                  </div>
+                  <br>
+                  <div class="col">
+                    <b>Release:</b> 
+                  </div>
+                  <div class="col width-2of12 {{item.build.release ? 'passed' : 'failed'}}" 
+                    ng-bind-html="getIcon('build')"></div>
+                  <div class="col width-10of12 {{item.build.release ? 'passed' : 'failed'}}">
+                    <h4>{{item.build.release ? "Passed" : "Failed"}}</h4>
+                  </div>
+                  <br>
+                  <div class="col">
+                    {{item.build.buildTimestamp | date:'MM/dd/yyyy h:mma'}}
+                  </div>
+                </div>
               </div>
             </div>
             <div class="col width-1of5">
-              <div class="result{{item.unitTest.status}}">
+              <div class="result {{item.unitTest.status}}" 
+                ng-switch on="item.unitTest.status" 
+                ng-click="showUnitTestDetails(item.unitTest)">
                 <h3>Unit Test</h3>
-                Passed: {{item.unitTest.numberpassed}}<br>
-                Failed: {{item.unitTest.numberfailed}}<br>
-                {{item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed) | number: 0}}% Tests Passed<br>
-                Code Covered: {{item.unitTest.codeCovered}}%<br>
+                <div ng-switch-when="undefined">
+                  No data available.
+                </div>
+                <div ng-switch-when="running">
+                  Currently running.
+                </div>
+                <div ng-switch-default>
+                  <div class="col width-1of2">
+                    <b>Passed:</b> {{item.unitTest.numberpassed}}
+                  </div>
+                  <div class="col width-1of2">
+                    <b>Failed:</b> {{item.unitTest.numberfailed}}
+                  </div>
+                  <div progress class="col" 
+                    max="item.unitTest.numberpassed + item.unitTest.numberfailed">
+                    <div bar value="item.unitTest.numberpassed" 
+                      type="success">{{item.unitTest.numberpassed}}</div>
+                    <div bar value="item.unitTest.numberfailed" 
+                      type="danger">{{item.unitTest.numberfailed}}</div>
+                  </div>                  
+                  <div class="col"><b>Tests Passed:</b></div> 
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed) | number: 0" 
+                      type="success">{{item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed) | number: 0}}%</div>
+                    <div bar value="100 - (item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed)) | number: 0" 
+                      type="danger">{{100 - (item.unitTest.numberpassed * 100 / (item.unitTest.numberpassed + item.unitTest.numberfailed)) | number: 0}}%</div>
+                  </div> 
+                  <div class="col"><b>Code Covered:</b></div> 
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.unitTest.codeCovered" 
+                      type="success">{{item.unitTest.codeCovered}}%</div>
+                    <div bar value="100 - item.unitTest.codeCovered" 
+                      type="danger">{{100 - item.unitTest.codeCovered}}%</div>
+                  </div> 
+                </div>
               </div>
             </div>
             <div class="col width-1of5">
-              <div class="result{{item.functionalTest.status}}">
+              <div class="result {{item.functionalTest.status}}" 
+                ng-switch on="item.functionalTest.status" 
+                ng-click="showFunctionalTestDetails(item.functionalTest)">
                 <h3>Functional Test</h3>
-                Passed: {{item.functionalTest.numberpassed}}<br>
-                Failed: {{item.functionalTest.numberfailed}}<br>
-                {{item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed) | number: 0}}% Tests Passed<br>
-                Code Covered: {{item.functionalTest.codeCovered}}%<br>
+                <div ng-switch-when="undefined">
+                  No data available.
+                </div>
+                <div ng-switch-when="running">
+                  Currently running.
+                </div>
+                <div ng-switch-default>
+                  <div class="col width-1of2"><b>Passed:</b> {{item.functionalTest.numberpassed}}</div>
+                  <div class="col width-1of2"><b>Failed:</b> {{item.functionalTest.numberfailed}}</div>
+                  <div progress class="col" 
+                    max="item.functionalTest.numberpassed + item.functionalTest.numberfailed">
+                    <div bar value="item.functionalTest.numberpassed" 
+                      type="success">{{item.functionalTest.numberpassed}}</div>
+                    <div bar value="item.functionalTest.numberfailed" 
+                      type="danger">{{item.functionalTest.numberfailed}}</div>
+                  </div>                
+                  <div class="col"><b>Tests Passed:</b></div> 
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed) | number: 0" 
+                      type="success">{{item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed) | number: 0}}%</div>
+                    <div bar value="100 - (item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed)) | number: 0" 
+                      type="danger">{{100 - (item.functionalTest.numberpassed * 100 / (item.functionalTest.numberpassed + item.functionalTest.numberfailed)) | number: 0}}%</div>
+                  </div> 
+                  <div class="col"><b>Code Covered:</b></div> 
+                  <div progress class="col" 
+                    max="100">
+                    <div bar value="item.functionalTest.codeCovered" 
+                      type="success">{{item.functionalTest.codeCovered}}%</div>
+                    <div bar value="100 - item.functionalTest.codeCovered" 
+                      type="danger">{{100 - item.functionalTest.codeCovered}}%</div>
+                  </div> 
+                </div>
               </div>
             </div>
             <div class="col width-1of5">
-              <div class="">
+              <div class="result {{item.state}}"
+                ng-switch on="item.state" >
                 <h3>Result</h3>
+                <div ng-switch-when="pending">
+                  <h4 class="centered">Pending</h4>
+                </div>
+                <div ng-switch-when="running">
+                  <h4 class="centered">Currently Running</h4>
+                </div>
+                <div ng-switch-when="complete">
+                  <h4 class="centered">Complete</h4>
+                  <b>Deploy to:</b><br>
+                  <select>
+                    <option value="production" selected>Production</option>
+                    <option value="testing">Testing</option>
+                  </select>
+                  <div class="btn btn-primary">Deploy</div>
+                </div>
+                <div ng-switch-when="rejected">
+                  <h4 class="centered">Change Rejected</h4>
+                  <b>Metrics Reduction</b><br>
+                  <div class="btn btn-primary"> <!-- Stub -->
+                    <div class="col width-1of12" 
+                      ng-bind-html="getIcon('search')"></div>
+                    <div class="col width-11of12">Find Issues</div>
+                  </div>
+                </div>
+                <div ng-switch-when="accepted">
+                  <h4 class="centered">Change Accepted</h4>
+                  <b>Auto-Merged</b><br>
+                  <div class="btn btn-primary"> <!-- Stub -->
+                    <div class="col width-1of12" 
+                      ng-bind-html="getIcon('search')"></div>
+                    <div class="col width-11of12">Merged Build</div>
+                  </div>
+                </div>
               </div>
             </div>
         </div>
